@@ -68,8 +68,8 @@ export function LeaderboardPanel({ game, onClose }: LeaderboardPanelProps) {
 
         {!loading && !configured && (
           <p class="leaderboard-msg">
-            Global leaderboard is not configured for this build. Set up Supabase in
-            the project README and rebuild.
+            Global leaderboard is not configured for this build. Start the local
+            leaderboard API and rebuild.
           </p>
         )}
 

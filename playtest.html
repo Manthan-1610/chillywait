@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChillYWait Playtest</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: 'Courier New', monospace;
+        background: #0a0a12;
+        color: #e8eaed;
+        min-height: 100vh;
+        padding: 16px;
+      }
+      h1 { color: #ffec27; font-size: 18px; margin: 0 0 8px; }
+      .bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+      button {
+        font-family: inherit;
+        padding: 8px 12px;
+        border: 2px solid #5b21b6;
+        background: #1a1030;
+        color: #c4b5fd;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      button.active { border-color: #ffec27; color: #ffec27; }
+      #hud { color: #ffec27; margin-left: auto; font-size: 14px; }
+      #stage {
+        width: 608px;
+        height: 300px;
+        border: 3px inset #2d2d44;
+        background: #050508;
+        margin: 0 auto;
+      }
+      #log {
+        max-width: 608px;
+        margin: 12px auto 0;
+        font-size: 12px;
+        color: #9aa0a6;
+        white-space: pre-wrap;
+        max-height: 160px;
+        overflow: auto;
+      }
+      .hint { font-size: 12px; color: #6b7280; margin-bottom: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>ChillYWait Playtest Harness</h1>
+    <p class="hint">Phase B manual QA — click a game, use keyboard on the canvas area.</p>
+    <div class="bar">
+      <button type="button" data-game="traffic" class="active">Traffic Rider</button>
+      <button type="button" data-game="coffee">Coffee Frenzy</button>
+      <button type="button" data-game="compile-run">Compile Run</button>
+      <span id="hud">SCORE 0 · BEST 0</span>
+    </div>
+    <div id="stage"></div>
+    <div id="log"></div>
+    <script type="module" src="/src/playtest/main.ts"></script>
+  </body>
+</html>

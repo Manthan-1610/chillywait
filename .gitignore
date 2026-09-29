@@ -1,0 +1,7 @@
+node_modules
+dist
+*.local
+playtest-results
+.env
+.env.*
+!.env.example

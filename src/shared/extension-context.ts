@@ -1,7 +1,7 @@
 import { DEFAULT_SETTINGS, type ChillYWaitSettings } from './constants';
 import { ensureProfileSettings } from './profile';
 
-export const EXTENSION_VERSION = '1.6.2';
+export const EXTENSION_VERSION = '1.6.4';
 
 export function isExtensionContextValid(): boolean {
   try {

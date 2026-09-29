@@ -21,12 +21,12 @@ ChillYWait can share your **personal best** scores to a world leaderboard (one r
 
 ### One-time backend setup (maintainers)
 
-1. Create a free [Supabase](https://supabase.com) project
-2. Run `supabase/schema.sql` in the Supabase SQL editor
-3. Copy `.env.example` to `.env` and set your project URL + anon key
-4. Rebuild: `npm run build`
+1. Create a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster
+2. Put `MONGODB_URI` and `VITE_LEADERBOARD_API_URL` in `.env` (see `.env.example`)
+3. Start the API: `npm run leaderboard`
+4. Rebuild the extension: `npm run build`
 
-Players worldwide then see rankings via the **🌍** button in the arcade overlay.
+The API listens on `http://127.0.0.1:8787` and keeps the Atlas password off the extension. Players see rankings via the **🌍** button in the arcade overlay while that API is running.
 
 ### Usernames
 

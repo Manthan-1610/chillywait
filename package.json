@@ -11,9 +11,11 @@
     "test:watch": "vitest",
     "playtest": "node scripts/playtest.mjs",
     "playtest:server": "vite --config vite.playtest.config.ts",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "leaderboard": "node --env-file=.env server/index.mjs"
   },
   "dependencies": {
+    "mongodb": "^7.7.0",
     "preact": "^10.25.4"
   },
   "devDependencies": {

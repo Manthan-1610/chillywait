@@ -10,11 +10,36 @@ import { isLeaderboardConfigured } from '../shared/leaderboard-config';
 import { hasRegisteredUsername } from '../shared/profile';
 import { checkUsernameAvailable, claimUsername as claimUsernameApi } from '../shared/username-api';
 
+const LOCAL_RESET_KEY = 'chillywait_local_reset';
+/** One-time wipe of this browser's ChillYWait profile and scores. */
+const LOCAL_RESET_TOKEN = '2026-09-29';
+
+let storageReady: Promise<void> | null = null;
+
+function ensureStorage(): Promise<void> {
+  if (!storageReady) {
+    storageReady = (async () => {
+      const stamp = await chrome.storage.local.get(LOCAL_RESET_KEY);
+      if (stamp[LOCAL_RESET_KEY] !== LOCAL_RESET_TOKEN) {
+        await chrome.storage.sync.clear();
+        await chrome.storage.local.clear();
+        await chrome.storage.sync.set(ensureProfileSettings({ ...DEFAULT_SETTINGS }));
+        await chrome.storage.local.set({ [LOCAL_RESET_KEY]: LOCAL_RESET_TOKEN });
+        return;
+      }
+      const existing = await chrome.storage.sync.get(null);
+      await chrome.storage.sync.set(
+        ensureProfileSettings({ ...DEFAULT_SETTINGS, ...existing }),
+      );
+    })();
+  }
+  return storageReady;
+}
+
+void ensureStorage();
+
 chrome.runtime.onInstalled.addListener(() => {
-  void chrome.storage.sync.get(null, (existing) => {
-    const merged = ensureProfileSettings({ ...DEFAULT_SETTINGS, ...existing });
-    void chrome.storage.sync.set(merged);
-  });
+  void ensureStorage();
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {

@@ -1,16 +1,5 @@
-import {
-  isLeaderboardConfigured,
-  LEADERBOARD_SUPABASE_KEY,
-  LEADERBOARD_SUPABASE_URL,
-} from './leaderboard-config';
+import { isLeaderboardConfigured, LEADERBOARD_API_URL } from './leaderboard-config';
 import { sanitizeUsername } from './profile';
-
-function headers(): Record<string, string> {
-  return {
-    apikey: LEADERBOARD_SUPABASE_KEY,
-    Authorization: `Bearer ${LEADERBOARD_SUPABASE_KEY}`,
-  };
-}
 
 export type ClaimUsernameResult =
   | { ok: true; username: string; username_set_at: string }
@@ -23,17 +12,15 @@ export async function checkUsernameAvailable(
   if (!isLeaderboardConfigured()) return false;
 
   const clean = sanitizeUsername(username);
-  const res = await fetch(
-    `${LEADERBOARD_SUPABASE_URL}/rest/v1/rpc/check_username_available`,
-    {
-      method: 'POST',
-      headers: { ...headers(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ p_username: clean, p_player_id: playerId }),
-    },
-  );
+  const res = await fetch(`${LEADERBOARD_API_URL}/v1/username/check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: clean, playerId }),
+  });
 
   if (!res.ok) return false;
-  return (await res.json()) === true;
+  const body = (await res.json()) as { available?: boolean };
+  return body.available === true;
 }
 
 export async function claimUsername(
@@ -45,10 +32,10 @@ export async function claimUsername(
   }
 
   const clean = sanitizeUsername(username);
-  const res = await fetch(`${LEADERBOARD_SUPABASE_URL}/rest/v1/rpc/claim_username`, {
+  const res = await fetch(`${LEADERBOARD_API_URL}/v1/username/claim`, {
     method: 'POST',
-    headers: { ...headers(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ p_player_id: playerId, p_username: clean }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playerId, username: clean }),
   });
 
   if (!res.ok) {

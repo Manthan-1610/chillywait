@@ -1,10 +1,8 @@
-/** Supabase REST endpoint — set at build time via .env (see .env.example). */
-export const LEADERBOARD_SUPABASE_URL =
-  (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/$/, '') ?? '';
-
-export const LEADERBOARD_SUPABASE_KEY =
-  (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? '';
+/** Local or deployed leaderboard API. Set at build time via .env. */
+export const LEADERBOARD_API_URL =
+  (import.meta.env.VITE_LEADERBOARD_API_URL as string | undefined)?.replace(/\/$/, '') ??
+  '';
 
 export function isLeaderboardConfigured(): boolean {
-  return LEADERBOARD_SUPABASE_URL.length > 0 && LEADERBOARD_SUPABASE_KEY.length > 0;
+  return LEADERBOARD_API_URL.length > 0;
 }

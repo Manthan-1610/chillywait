@@ -3,7 +3,7 @@ import { defineManifest } from '@crxjs/vite-plugin';
 export default defineManifest({
   manifest_version: 3,
   name: 'ChillYWait',
-  version: '1.6.2',
+  version: '1.6.4',
   description: 'Play minigames while Gemini thinks. Auto-activates on gemini.google.com.',
   icons: {
     '16': 'public/icons/icon16.png',
@@ -25,7 +25,8 @@ export default defineManifest({
   permissions: ['storage'],
   host_permissions: [
     'https://gemini.google.com/*',
-    'https://*.supabase.co/*',
+    'http://127.0.0.1:8787/*',
+    'http://localhost:8787/*',
   ],
   content_scripts: [
     {

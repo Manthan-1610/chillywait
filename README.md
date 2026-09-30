@@ -26,7 +26,7 @@ ChillYWait can share your **personal best** scores to a world leaderboard (one r
 3. Start the API: `npm run leaderboard`
 4. Rebuild the extension: `npm run build`
 
-Locally, `npm run leaderboard` serves `http://127.0.0.1:8787`. On Render, `npm start` listens on the host port. The Atlas password stays in the host environment, not in the extension.
+The extension calls the hosted API at `https://chillywait.onrender.com`. `npm run leaderboard` still runs a local copy at `http://127.0.0.1:8787`. The Atlas password stays on the server.
 
 ### Usernames
 

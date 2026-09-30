@@ -26,6 +26,7 @@ interface Obstacle {
   kind: ObstacleKind;
   label: string;
   telegraph: number;
+  flash: number;
 }
 
 interface Dust {
@@ -98,6 +99,9 @@ export function createCompileRun(
   let playing = false;
   let perfectStreak = 0;
   let wasAirborne = false;
+  let crouch = 0;
+  let crashHold = 0;
+  let landHang = 0;
   let lastAnnouncedStage = 1;
 
   const liveSpeed = () =>
@@ -179,6 +183,9 @@ export function createCompileRun(
     playing = false;
     perfectStreak = 0;
     wasAirborne = false;
+    crouch = 0;
+    crashHold = 0;
+    landHang = 0;
     lastAnnouncedStage = 1;
     onScore(0);
   };
@@ -198,20 +205,17 @@ export function createCompileRun(
 
   const doJump = () => {
     audio.unlock();
-    if (pauseReason === 'answer' || pauseReason === 'minimize') return;
+    if (pauseReason === 'answer' || pauseReason === 'minimize' || crashHold > 0) return;
     if (gameOver) {
       reset();
       pauseReason = null;
       return;
     }
     beginPlay();
-    if (grounded || coyote > 0) {
-      vy = JUMP_VY;
-      grounded = false;
+    if ((grounded || coyote > 0) && crouch <= 0) {
+      crouch = 4;
       coyote = 0;
       jumpBuffer = 0;
-      wasAirborne = true;
-      audio.play('jump');
     } else {
       jumpBuffer = JUMP_BUFFER_FRAMES;
     }
@@ -234,6 +238,7 @@ export function createCompileRun(
       kind,
       label: labels[Math.floor(Math.random() * labels.length)],
       telegraph: 1,
+      flash: 0,
     });
   };
 
@@ -254,16 +259,18 @@ export function createCompileRun(
   };
 
   const drawGround = () => {
+    const streak = Math.max(1, liveSpeed() / SPEED_BASE);
     ctx.fillStyle = COLORS.roadDark;
     ctx.fillRect(0, GROUND_Y, GAME_WIDTH, GAME_HEIGHT - GROUND_Y);
     ctx.fillStyle = COLORS.road;
     ctx.fillRect(0, GROUND_Y, GAME_WIDTH, 6);
     ctx.fillStyle = '#3a3a52';
     ctx.fillRect(0, GROUND_Y + 6, GAME_WIDTH, GAME_HEIGHT - GROUND_Y - 6);
-    for (let i = 0; i < 12; i++) {
-      const gx = ((scroll * 1.6 + i * 54) % (GAME_WIDTH + 50)) - 25;
+    const marks = 8 + Math.round(streak * 3);
+    for (let i = 0; i < marks; i++) {
+      const gx = ((scroll * (1.1 + streak) + i * (70 / streak)) % (GAME_WIDTH + 60)) - 30;
       ctx.fillStyle = COLORS.muted;
-      ctx.fillRect(gx, GROUND_Y + 12, 24, 2);
+      ctx.fillRect(gx, GROUND_Y + 12, 12 + streak * 14, 2);
     }
   };
 
@@ -292,7 +299,9 @@ export function createCompileRun(
     ctx.save();
     // Shrink around feet so character stays planted on the road
     ctx.translate(cx, feet);
-    ctx.scale(CHAR_SCALE, CHAR_SCALE);
+    const squashY = crouch > 0 ? 0.72 : landHang > 0 ? 0.84 : airborne && vy < 0 ? 1.14 : 1;
+    const squashX = crouch > 0 ? 1.12 : landHang > 0 ? 1.14 : airborne && vy < 0 ? 0.9 : 1;
+    ctx.scale(CHAR_SCALE * squashX, CHAR_SCALE * squashY);
     ctx.translate(-cx, -feet);
 
     if (airborne) {
@@ -376,8 +385,12 @@ export function createCompileRun(
     ctx.fillRect(sx + 2, GROUND_Y - 1, o.w - 2, 4);
 
     // Solid error block on the road — THIS is what you jump
-    ctx.fillStyle = '#ef4444';
+    ctx.fillStyle = o.flash > 0 ? '#fde68a' : '#ef4444';
     ctx.fillRect(sx, top, o.w, o.h);
+    if (o.flash > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${o.flash * 0.65})`;
+      ctx.fillRect(sx, top, o.w, o.h);
+    }
     ctx.fillStyle = '#7f1d1d';
     ctx.fillRect(sx, top, o.w, 4);
     ctx.fillStyle = '#fecaca';
@@ -454,10 +467,10 @@ export function createCompileRun(
       const oRight = ox + o.w - 4;
       const oTop = GROUND_Y - o.h + 4;
       if (p.right > oLeft && p.left < oRight && p.bottom > oTop) {
-        gameOver = true;
+        if (crashHold > 0 || gameOver) return;
+        crashHold = 36;
         perfectStreak = 0;
         juice.bumpShake(12);
-        juice.addHitstop(4);
         juice.addFloater('SYNTAX ERROR', PLAYER_X + 20, GROUND_Y - 50, 'danger');
         audio.play('crash');
         emitRunEnd('death');
@@ -484,6 +497,8 @@ export function createCompileRun(
         perfectStreak++;
         const pts = PERFECT_POINTS * Math.min(perfectStreak, 4);
         perfectScore += pts;
+        cleared.flash = 1;
+        landHang = 12;
         juice.addFloater(
           perfectStreak > 1 ? `PERFECT x${perfectStreak} +${pts}` : `+${pts} PERFECT`,
           PLAYER_X + 20,
@@ -517,7 +532,13 @@ export function createCompileRun(
       }
 
       const canSim = juice.tick();
+      if (crashHold > 0) {
+        if (canSim) crashHold -= 1;
+        if (crashHold <= 0) gameOver = true;
+        return;
+      }
       if (!canSim || pauseReason || gameOver) return;
+      landHang = Math.max(0, landHang - 1);
 
       tick++;
       const speed = liveSpeed();
@@ -549,8 +570,19 @@ export function createCompileRun(
         }
       }
 
-      // Gravity only while airborne — grounded must not accumulate vy
-      if (!grounded || jumpY < 0) {
+      if (crouch > 0) {
+        crouch -= 1;
+        if (crouch === 0) {
+          vy = JUMP_VY;
+          grounded = false;
+          wasAirborne = true;
+          audio.play('jump');
+        }
+      }
+
+      if (crouch > 0) {
+        // Stay planted through the wind-up so the squash reads before liftoff.
+      } else if (!grounded || jumpY < 0) {
         vy += vy < 0 ? GRAVITY_UP : GRAVITY_DOWN;
         jumpY += vy;
         if (jumpY >= 0) {
@@ -573,6 +605,7 @@ export function createCompileRun(
 
       for (const o of obstacles) {
         o.telegraph = Math.max(0, o.telegraph - 0.01);
+        o.flash = Math.max(0, o.flash - 0.08);
       }
 
       obstacles = obstacles.filter((o) => o.worldX - scroll > -80);
@@ -602,6 +635,7 @@ export function createCompileRun(
     },
     resume() {
       if (gameOver) return;
+      runEnded = false;
       pauseReason = null;
       input.setEnabled(true);
       input.focusPlayfield();

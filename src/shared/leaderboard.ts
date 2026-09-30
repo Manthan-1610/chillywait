@@ -48,6 +48,6 @@ export type LeaderboardResponse =
 
 export const GAME_LABELS: Record<GameId, string> = {
   traffic: 'Traffic Rider',
-  coffee: 'Coffee Frenzy',
+  coffee: 'Last Token',
   'compile-run': 'Compile Run',
 };

@@ -154,7 +154,7 @@ export function Popup() {
     <div class="popup">
       <h1>ChillYWait</h1>
       <p class="subtitle">Play while your LLM thinks</p>
-      <p class="version">v{version} · arcade v1.6.5</p>
+      <p class="version">v{version} · arcade v1.6.10</p>
 
       {needsReload && (
         <p class="reload-notice">

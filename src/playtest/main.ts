@@ -1,5 +1,5 @@
 import { createTrafficRider } from '../overlay/games/traffic-rider';
-import { createCoffeeFrenzy } from '../overlay/games/coffee-frenzy';
+import { createLastToken } from '../overlay/games/last-token';
 import { createCompileRun } from '../overlay/games/compile-run';
 import type { GameController } from '../overlay/games/types';
 import type { GameId } from '../shared/constants';
@@ -36,18 +36,16 @@ function mount(game: GameId): void {
     );
   };
 
-  if (game === 'coffee') {
-    controller = createCoffeeFrenzy(stage, onScore, onRunEnd, false);
-  } else {
-    const canvas = document.createElement('canvas');
-    stage.appendChild(canvas);
-    controller =
-      game === 'traffic'
+  const canvas = document.createElement('canvas');
+  stage.appendChild(canvas);
+  controller =
+    game === 'coffee'
+      ? createLastToken(canvas, onScore, onRunEnd, false)
+      : game === 'traffic'
         ? createTrafficRider(canvas, onScore, onRunEnd, false)
         : createCompileRun(canvas, onScore, onRunEnd, false);
-    controller.resume();
-    canvas.focus();
-  }
+  controller.resume();
+  canvas.focus();
 
   log(`Mounted ${game}`);
   buttons.forEach((b) => b.classList.toggle('active', b.dataset.game === game));

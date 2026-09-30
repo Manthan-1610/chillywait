@@ -106,7 +106,12 @@ export class Juice {
       ctx.shadowBlur = 0;
       ctx.shadowOffsetX = 1;
       ctx.shadowOffsetY = 1;
-      const scale = f.style === 'perfect' || f.style === 'best' ? 1 + (1 - t) * 0.15 : 1;
+      const scale =
+        f.style === 'near'
+          ? 0.72
+          : f.style === 'perfect' || f.style === 'best'
+            ? 1 + (1 - t) * 0.15
+            : 1;
       ctx.translate(f.x, f.y);
       ctx.scale(scale, scale);
       ctx.fillText(f.text, 0, 0);

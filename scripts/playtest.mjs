@@ -69,12 +69,12 @@ async function testCoffee(page) {
   await clickGame(page, 'coffee');
   await focusStage(page);
 
-  // Smash through fill + drink — must score without dying
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 4; i++) {
     await page.keyboard.press('Space');
-    await wait(120);
+    await wait(80);
   }
-  await wait(1400);
+  await page.keyboard.press('b');
+  await wait(400);
 
   await page.screenshot({ path: join(OUT, 'coffee.png') });
   const h = await hud(page);

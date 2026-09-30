@@ -6,12 +6,12 @@ Play minigames while Gemini thinks. ChillYWait is a Chrome extension that detect
 
 - Auto-detects Gemini "thinking" / generating state on **gemini.google.com**
 - Configurable activation: after a delay (default 8s) or immediately
-- Three retro endless arcade games: **Traffic Rider**, **Coffee Frenzy**, **Compile Run**
+- Three arcade games: **Traffic Rider**, **Last Token**, **Compile Run**
 - Wide arcade-style panel (520×340) with pixel-art canvas games
 - DOM-based detection of generating/thinking UI (no fetch interception)
 - **Player profile** with optional **global leaderboards** per game (opt-in)
 - Shared **fixed-timestep game runtime** (Phase A) — fair pause, run-end scoring, answer-ready Finish/Bank/Close
-- **Phase B gameplay**: Traffic near-miss/nitro/waves · Coffee mash→drink · Compile coyote/perfect jumps
+- **Phase B gameplay**: Traffic near-miss/nitro/waves · Last Token stack-and-catch · Compile coyote/perfect jumps
 - **Phase C polish**: shared juice (shake / hitstop / floaters), procedural SFX, controls hint, NEW BEST chime
 - Privacy-first by default: scores stay local unless you enable world leaderboard sharing
 

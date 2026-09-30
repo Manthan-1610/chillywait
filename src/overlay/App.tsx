@@ -7,7 +7,7 @@ import { GamePicker } from './components/GamePicker';
 import { LeaderboardPanel } from './components/LeaderboardPanel';
 import { AnswerReadyBar } from './components/AnswerReadyBar';
 import { createTrafficRider } from './games/traffic-rider';
-import { createCoffeeFrenzy } from './games/coffee-frenzy';
+import { createLastToken } from './games/last-token';
 import { createCompileRun } from './games/compile-run';
 import { GAMES } from './games/registry';
 import { getBest, initHighscores, recordRunEnd } from './games/highscore';
@@ -35,7 +35,26 @@ export function App() {
   const phaseRef = useRef<WaitPhase>(phase);
   /** After Finish run, ignore further answer_ready pauses until phase leaves. */
   const finishChosenRef = useRef(false);
+  /** Player hid the pill on purpose — keep the run for when they expand. */
+  const userMinimizedRef = useRef(false);
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const answerArmRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const armAnswer = () => {
+    if (finishChosenRef.current) return;
+    if (gameRef.current === 'coffee') {
+      controllerRef.current?.pause('answer');
+      if (answerArmRef.current) clearTimeout(answerArmRef.current);
+      answerArmRef.current = setTimeout(() => {
+        if (phaseRef.current === 'answer_ready' && !finishChosenRef.current) {
+          setAnswerPrompt(true);
+        }
+      }, 2800);
+      return;
+    }
+    setAnswerPrompt(true);
+    controllerRef.current?.pause('answer');
+  };
 
   useEffect(() => {
     void initHighscores().then(() => {
@@ -45,6 +64,13 @@ export function App() {
 
   const handleScore = (value: number) => {
     setScore(value);
+  };
+
+  /** Save an open run once. Later closes can save again if the score went up. */
+  const settleOpenRun = () => {
+    const controller = controllerRef.current;
+    if (!controller || controller.getScore() <= 0) return;
+    controller.endRun('bank');
   };
 
   const handleRunEnd = (result: RunResult) => {
@@ -71,16 +97,21 @@ export function App() {
         phaseRef.current = data.phase;
         setElapsedMs(data.elapsedMs);
         if (data.phase === 'answer_ready') {
-          if (!finishChosenRef.current) {
-            setAnswerPrompt(true);
-            controllerRef.current?.pause('answer');
-          }
+          if (!finishChosenRef.current) armAnswer();
         } else if (data.phase === 'overlay_visible') {
           setAnswerPrompt(false);
           if (finishChosenRef.current) {
             controllerRef.current?.resume();
           }
-        } else if (data.phase === 'idle' || data.phase === 'generating') {
+        } else if (data.phase === 'idle') {
+          finishChosenRef.current = false;
+          setAnswerPrompt(false);
+          if (userMinimizedRef.current) {
+            userMinimizedRef.current = false;
+          } else {
+            settleOpenRun();
+          }
+        } else if (data.phase === 'generating') {
           finishChosenRef.current = false;
           setAnswerPrompt(false);
         }
@@ -94,7 +125,10 @@ export function App() {
           const reason = msg.reason ?? 'minimize';
           // Don't re-lock if player already chose Finish run
           if (reason === 'answer' && finishChosenRef.current) return;
-          if (reason === 'answer') setAnswerPrompt(true);
+          if (reason === 'answer') {
+            armAnswer();
+            return;
+          }
           controllerRef.current?.pause(reason);
         } else if (phaseRef.current !== 'answer_ready' || finishChosenRef.current) {
           setAnswerPrompt(false);
@@ -102,14 +136,22 @@ export function App() {
         }
       }
     };
+    const onPageHide = () => settleOpenRun();
     window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
+    window.addEventListener('pagehide', onPageHide);
+    return () => {
+      window.removeEventListener('message', handler);
+      window.removeEventListener('pagehide', onPageHide);
+    };
   }, []);
 
   useEffect(() => {
     const area = gameAreaRef.current;
     if (!area) return;
 
+    if ((controllerRef.current?.getScore() ?? 0) > 0) {
+      controllerRef.current?.endRun('bank');
+    }
     controllerRef.current?.destroy();
     area.innerHTML = '';
     area.className = 'game-area game-area--fill';
@@ -124,35 +166,35 @@ export function App() {
     hintTimerRef.current = setTimeout(() => setControlsHint(null), 3200);
 
     const startPaused = true;
-
+    const canvas = document.createElement('canvas');
+    area.appendChild(canvas);
     if (game === 'coffee') {
-      controllerRef.current = createCoffeeFrenzy(
-        area,
+      controllerRef.current = createLastToken(
+        canvas,
+        handleScore,
+        handleRunEnd,
+        startPaused,
+      );
+    } else if (game === 'traffic') {
+      controllerRef.current = createTrafficRider(
+        canvas,
         handleScore,
         handleRunEnd,
         startPaused,
       );
     } else {
-      const canvas = document.createElement('canvas');
-      area.appendChild(canvas);
-      if (game === 'traffic') {
-        controllerRef.current = createTrafficRider(
-          canvas,
-          handleScore,
-          handleRunEnd,
-          startPaused,
-        );
-      } else {
-        controllerRef.current = createCompileRun(
-          canvas,
-          handleScore,
-          handleRunEnd,
-          startPaused,
-        );
-      }
+      controllerRef.current = createCompileRun(
+        canvas,
+        handleScore,
+        handleRunEnd,
+        startPaused,
+      );
     }
 
     return () => {
+      if ((controllerRef.current?.getScore() ?? 0) > 0) {
+        controllerRef.current?.endRun('bank');
+      }
       controllerRef.current?.destroy();
       if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
     };
@@ -213,7 +255,10 @@ export function App() {
           🌍
         </button>
         <Controls
-          onMinimize={() => postToParent({ type: 'minimize' })}
+          onMinimize={() => {
+            userMinimizedRef.current = true;
+            postToParent({ type: 'minimize' });
+          }}
           onDismiss={() => {
             controllerRef.current?.endRun('quit');
             postToParent({ type: 'dismiss' });

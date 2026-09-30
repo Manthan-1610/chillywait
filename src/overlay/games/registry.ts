@@ -14,9 +14,9 @@ export const GAMES: {
   },
   {
     id: 'coffee',
-    label: 'Coffee Frenzy',
-    icon: '☕',
-    hint: 'Mash ~10× to fill — stop when full',
+    label: 'Last Token',
+    icon: '◆',
+    hint: 'Stack higher to pay full · time the ring',
   },
   {
     id: 'compile-run',

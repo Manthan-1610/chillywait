@@ -80,6 +80,21 @@ export class AudioBus {
     this.unlocked = true;
   }
 
+  /** Short tone. Used so a rising stack can drop in pitch. */
+  blip(freq: number): void {
+    if (this.muted) return;
+    const ctx = this.ensureCtx();
+    if (!ctx || !this.unlocked) return;
+    if (ctx.state === 'suspended') void ctx.resume();
+    this.beep(ctx, ctx.currentTime, {
+      freq: Math.max(70, freq),
+      dur: 0.045,
+      type: 'triangle',
+      gain: 0.05,
+      slide: Math.max(50, freq * 0.72),
+    });
+  }
+
   play(id: SfxId): void {
     if (this.muted) return;
     const now = performance.now();

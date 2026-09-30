@@ -77,6 +77,9 @@ export function createTrafficRider(
   let runStartedAt = 0;
   let nitro = false;
   let wasNitro = false;
+  let crashHold = 0;
+  let kickX = 0;
+  let kickY = 0;
   let lastAnnouncedStage = 1;
   const juice = new Juice();
 
@@ -115,6 +118,9 @@ export function createTrafficRider(
     runStartedAt = 0;
     nitro = false;
     wasNitro = false;
+    crashHold = 0;
+    kickX = 0;
+    kickY = 0;
     lastAnnouncedStage = 1;
     juice.reset();
     onScore(0);
@@ -247,10 +253,10 @@ export function createTrafficRider(
     ctx.scale(BIKE_SCALE, BIKE_SCALE);
     ctx.translate(-cx, -by);
 
-    if (Math.abs(lean) > 0.3) {
-      ctx.translate(cx, by - 50);
-      ctx.rotate(lean * 0.018);
-      ctx.translate(-cx, -(by - 50));
+    if (Math.abs(lean) > 0.2) {
+      ctx.translate(cx, by - 40);
+      ctx.rotate(lean * 0.04);
+      ctx.translate(-cx, -(by - 40));
     }
 
     // Ground shadow
@@ -389,6 +395,7 @@ export function createTrafficRider(
     const wave = scaledWaveAt(tick);
     const baseSpeed = wave.speed;
     juice.beginShake(ctx);
+    ctx.translate(kickX, kickY);
 
     drawSky();
     drawRoad(baseSpeed);
@@ -436,7 +443,7 @@ export function createTrafficRider(
   };
 
   const moveLane = (d: number) => {
-    if (gameOver || pauseReason === 'answer' || pauseReason === 'minimize') return;
+    if (gameOver || crashHold > 0 || pauseReason === 'answer' || pauseReason === 'minimize') return;
     audio.unlock();
     lane = Math.max(0, Math.min(2, lane + d));
     if (!started) {
@@ -480,6 +487,13 @@ export function createTrafficRider(
     update: () => {
       handleInput();
       const canSim = juice.tick();
+      kickX *= 0.84;
+      kickY *= 0.8;
+      if (crashHold > 0) {
+        if (canSim) crashHold -= 1;
+        if (crashHold <= 0) gameOver = true;
+        return;
+      }
 
       if (!canSim || pauseReason || gameOver) return;
 
@@ -531,21 +545,24 @@ export function createTrafficRider(
           c.nearMissed = true;
           nearMissScore += NEAR_MISS_POINTS;
           juice.addFloater(
-            `+${NEAR_MISS_POINTS} NEAR`,
+            `+${NEAR_MISS_POINTS}`,
             laneCenter(c.lane, c.z),
             roadY(c.z) - 8,
             'near',
           );
-          juice.bumpShake(2.5);
+          kickX = Math.max(-14, Math.min(14, (laneT - c.lane) * 18));
+          juice.bumpShake(3.5);
           audio.play('near');
         }
-        if (laneDist < LANE_HIT && c.z > HIT_Z_MIN && c.z < HIT_Z_MAX) {
-          gameOver = true;
+        if (crashHold <= 0 && laneDist < LANE_HIT && c.z > HIT_Z_MIN && c.z < HIT_Z_MAX) {
+          crashHold = 34;
+          kickX = Math.max(-16, Math.min(16, (laneT - c.lane) * 16));
+          kickY = 4;
           juice.bumpShake(14);
-          juice.addHitstop(4);
           juice.addFloater('CRASH', laneCenter(laneT, 0.9), roadY(0.9) - 20, 'danger');
           audio.play('crash');
           emitRunEnd('death');
+          break;
         }
       }
 
@@ -587,6 +604,7 @@ export function createTrafficRider(
     },
     resume() {
       if (gameOver) return;
+      runEnded = false;
       pauseReason = null;
       input.setEnabled(true);
       input.focusPlayfield();

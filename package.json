@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
+    "start": "node server/index.mjs",
     "dev": "vite",
     "build": "node scripts/generate-icons.mjs && tsc && vite build && node scripts/verify-build.mjs",
     "preview": "vite preview",

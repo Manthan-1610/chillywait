@@ -26,7 +26,7 @@ ChillYWait can share your **personal best** scores to a world leaderboard (one r
 3. Start the API: `npm run leaderboard`
 4. Rebuild the extension: `npm run build`
 
-The API listens on `http://127.0.0.1:8787` and keeps the Atlas password off the extension. Players see rankings via the **🌍** button in the arcade overlay while that API is running.
+Locally, `npm run leaderboard` serves `http://127.0.0.1:8787`. On Render, `npm start` listens on the host port. The Atlas password stays in the host environment, not in the extension.
 
 ### Usernames
 

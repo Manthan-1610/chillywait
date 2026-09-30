@@ -1,8 +1,8 @@
 import { createServer } from 'node:http';
 import { MongoClient } from 'mongodb';
 
-const PORT = Number(process.env.LEADERBOARD_PORT || 8787);
-const HOST = '127.0.0.1';
+const PORT = Number(process.env.PORT || process.env.LEADERBOARD_PORT || 8787);
+const HOST = '0.0.0.0';
 const USERNAME_RE = /^[a-z0-9_]{3,16}$/;
 const GAMES = new Set(['traffic', 'coffee', 'compile-run']);
 const COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;

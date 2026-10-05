@@ -103,7 +103,11 @@ export function App() {
       audio.play('best');
       setBestToast(true);
       window.setTimeout(() => setBestToast(false), 2400);
-      void submitScore(result.game, recorded.best, result.durationMs, result.seed);
+    }
+    // All-time PB OR today's daily PB should sync — otherwise Daily stays empty
+    // until someone beats their lifetime best.
+    if (recorded.isNewBest || recorded.isNewDailyBest) {
+      void submitScore(result.game, result.score, result.durationMs, result.seed);
     }
     setAnswerPrompt(false);
   };

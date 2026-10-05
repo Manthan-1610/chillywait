@@ -1,10 +1,12 @@
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
+import { execFileSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outDir = join(__dirname, '..', 'public', 'icons');
+const sourcePath = join(outDir, 'icon-source.png');
 mkdirSync(outDir, { recursive: true });
 
 function crc32(buf) {
@@ -27,7 +29,8 @@ function chunk(type, data) {
   return Buffer.concat([len, t, data, crc]);
 }
 
-function createPng(size) {
+/** Flat purple fallback if no art source is present. */
+function createFallbackPng(size) {
   const raw = [];
   for (let y = 0; y < size; y++) {
     raw.push(0);
@@ -52,8 +55,45 @@ function createPng(size) {
   ]);
 }
 
-for (const size of [16, 48, 128]) {
-  writeFileSync(join(outDir, `icon${size}.png`), createPng(size));
+function resizeWithPowerShell(source, size, dest) {
+  const script = `
+Add-Type -AssemblyName System.Drawing
+$src = [System.Drawing.Image]::FromFile('${source.replace(/'/g, "''")}')
+$bmp = New-Object System.Drawing.Bitmap ${size}, ${size}
+$g = [System.Drawing.Graphics]::FromImage($bmp)
+$g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+$g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+$g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+$g.Clear([System.Drawing.Color]::Transparent)
+$g.DrawImage($src, 0, 0, ${size}, ${size})
+$g.Dispose()
+$bmp.Save('${dest.replace(/'/g, "''")}', [System.Drawing.Imaging.ImageFormat]::Png)
+$bmp.Dispose()
+$src.Dispose()
+`;
+  execFileSync(
+    'powershell.exe',
+    ['-NoProfile', '-Command', script],
+    { stdio: 'inherit' },
+  );
 }
 
-console.log('Icons generated in public/icons/');
+if (existsSync(sourcePath)) {
+  for (const size of [16, 48, 128]) {
+    const dest = join(outDir, `icon${size}.png`);
+    try {
+      resizeWithPowerShell(sourcePath, size, dest);
+    } catch {
+      // Keep any existing sized icon if resize tooling fails.
+      if (!existsSync(dest)) {
+        writeFileSync(dest, createFallbackPng(size));
+      }
+    }
+  }
+  console.log('Icons generated from public/icons/icon-source.png');
+} else {
+  for (const size of [16, 48, 128]) {
+    writeFileSync(join(outDir, `icon${size}.png`), createFallbackPng(size));
+  }
+  console.log('Icons generated (fallback solid) in public/icons/');
+}

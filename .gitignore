@@ -5,3 +5,6 @@ playtest-results
 .env
 .env.*
 !.env.example
+store/chillywait-*.zip
+store/screenshots/*
+!store/screenshots/README.md

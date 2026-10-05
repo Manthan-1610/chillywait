@@ -3,8 +3,9 @@ import { defineManifest } from '@crxjs/vite-plugin';
 export default defineManifest({
   manifest_version: 3,
   name: 'ChillYWait',
-  version: '1.6.10',
-  description: 'Play minigames while Gemini thinks. Auto-activates on gemini.google.com.',
+  version: '1.7.0',
+  description:
+    'Play arcade minigames while Gemini thinks. Auto-activates on gemini.google.com.',
   icons: {
     '16': 'public/icons/icon16.png',
     '48': 'public/icons/icon48.png',

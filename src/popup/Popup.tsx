@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS } from '../shared/constants';
 import { getSettings, saveSettings } from '../shared/storage';
 import { sendToActiveTab } from '../shared/messaging';
 import { getExtensionVersion, isExtensionContextValid } from '../shared/extension-context';
-import { getLeaderboardStatus } from '../shared/leaderboard-client';
+import { getLeaderboardStatus, wakeLeaderboard } from '../shared/leaderboard-client';
 import {
   canChangeUsername,
   formatCooldownRemaining,
@@ -28,6 +28,7 @@ export function Popup() {
   const [version] = useState(() => getExtensionVersion());
   const [needsReload, setNeedsReload] = useState(!isExtensionContextValid());
   const [leaderboardConfigured, setLeaderboardConfigured] = useState(false);
+  const [leaderboardWaking, setLeaderboardWaking] = useState(false);
   const [usernameDraft, setUsernameDraft] = useState('');
   const [availState, setAvailState] = useState<AvailState>('idle');
   const [formError, setFormError] = useState('');
@@ -49,7 +50,15 @@ export function Popup() {
       })
       .catch(() => setNeedsReload(true));
     void getLeaderboardStatus()
-      .then((s) => setLeaderboardConfigured(s.configured))
+      .then((s) => {
+        setLeaderboardConfigured(s.configured);
+        if (s.configured) {
+          setLeaderboardWaking(true);
+          void wakeLeaderboard()
+            .then((w) => setLeaderboardWaking(Boolean(w.waking) || !w.ok))
+            .catch(() => setLeaderboardWaking(true));
+        }
+      })
       .catch(() => setLeaderboardConfigured(false));
   }, []);
 
@@ -154,7 +163,7 @@ export function Popup() {
     <div class="popup">
       <h1>ChillYWait</h1>
       <p class="subtitle">Play while your LLM thinks</p>
-      <p class="version">v{version} · arcade v1.6.10</p>
+      <p class="version">v{version} · arcade v1.7.0</p>
 
       {needsReload && (
         <p class="reload-notice">
@@ -253,7 +262,19 @@ export function Popup() {
         {leaderboardConfigured && hasUsername && settings.leaderboardOptIn && (
           <p class="field-hint">Tap 🌍 in-game to view world rankings.</p>
         )}
+        {leaderboardConfigured && leaderboardWaking && (
+          <p class="field-hint">Waking leaderboard server…</p>
+        )}
       </section>
+
+      <label class="site-toggle leaderboard-opt">
+        <input
+          type="checkbox"
+          checked={settings.soundMuted}
+          onChange={() => void update({ soundMuted: !settings.soundMuted })}
+        />
+        Mute game sounds
+      </label>
 
       <div class="field">
         <label for="activation">Activation mode</label>

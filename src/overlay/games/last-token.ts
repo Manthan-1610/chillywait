@@ -1,6 +1,7 @@
 import type { GameController, RunEndCallback, ScoreCallback } from './types';
 import type { PauseReason, RunEndReason } from '../engine/types';
 import { GameRuntime, InputManager, Juice, audio } from '../engine';
+import { freshRunSeed } from '../../shared/seeded-rng';
 import {
   COLORS,
   drawGameOver,
@@ -152,6 +153,7 @@ export function createLastToken(
   let falling: FallChip[] = [];
   let flyers: Flyer[] = [];
   let runStartedAt = 0;
+  let runSeed = freshRunSeed();
   const juice = new Juice();
 
   const syncScore = () => onScore(banked);
@@ -164,6 +166,7 @@ export function createLastToken(
       score: banked,
       durationMs: runStartedAt ? performance.now() - runStartedAt : 0,
       reason,
+      seed: runSeed,
     });
   };
 
@@ -185,6 +188,7 @@ export function createLastToken(
     falling = [];
     flyers = [];
     runStartedAt = 0;
+    runSeed = freshRunSeed();
     juice.reset();
     syncScore();
   };

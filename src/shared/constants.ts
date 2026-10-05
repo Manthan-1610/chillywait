@@ -27,6 +27,8 @@ export interface ChillYWaitSettings {
   usernameSetAt: number;
   /** When true, new personal bests are submitted to the global leaderboard. */
   leaderboardOptIn: boolean;
+  /** Mute procedural SFX in the overlay. */
+  soundMuted: boolean;
 }
 
 export const DEFAULT_SETTINGS: ChillYWaitSettings = {
@@ -42,6 +44,7 @@ export const DEFAULT_SETTINGS: ChillYWaitSettings = {
   username: '',
   usernameSetAt: 0,
   leaderboardOptIn: false,
+  soundMuted: false,
 };
 
 export const PLATFORM_HOSTS: Record<PlatformId, string[]> = {

@@ -1,4 +1,5 @@
-import { isLeaderboardConfigured, LEADERBOARD_API_URL } from './leaderboard-config';
+import { isLeaderboardConfigured } from './leaderboard-config';
+import { fetchWithWake } from './leaderboard-api';
 import { sanitizeUsername } from './profile';
 
 export type ClaimUsernameResult =
@@ -12,7 +13,7 @@ export async function checkUsernameAvailable(
   if (!isLeaderboardConfigured()) return false;
 
   const clean = sanitizeUsername(username);
-  const res = await fetch(`${LEADERBOARD_API_URL}/v1/username/check`, {
+  const { res } = await fetchWithWake('/v1/username/check', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: clean, playerId }),
@@ -32,7 +33,7 @@ export async function claimUsername(
   }
 
   const clean = sanitizeUsername(username);
-  const res = await fetch(`${LEADERBOARD_API_URL}/v1/username/claim`, {
+  const { res } = await fetchWithWake('/v1/username/claim', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ playerId, username: clean }),

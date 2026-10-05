@@ -13,11 +13,19 @@ Play minigames while Gemini thinks. ChillYWait is a Chrome extension that detect
 - Shared **fixed-timestep game runtime** (Phase A) — fair pause, run-end scoring, answer-ready Finish/Bank/Close
 - **Phase B gameplay**: Traffic near-miss/nitro/waves · Last Token stack-and-catch · Compile coyote/perfect jumps
 - **Phase C polish**: shared juice (shake / hitstop / floaters), procedural SFX, controls hint, NEW BEST chime
+- **Fair boards**: per-run seeds, duration-based score caps, all-time + daily leaderboards
+- Mute toggle (overlay + popup) and cold-start retries for the free Render API
 - Privacy-first by default: scores stay local unless you enable world leaderboard sharing
 
 ## Global leaderboard (optional)
 
 ChillYWait can share your **personal best** scores to a world leaderboard (one row per player per game). This is **opt-in** — toggle it in the extension popup under **Player profile**.
+
+Boards:
+- **All-time** — best score ever for that game
+- **Daily** — best score for the current UTC day
+
+Submissions include run duration and a seed. The API rejects impossible scores for the reported duration.
 
 ### One-time backend setup (maintainers)
 
@@ -27,6 +35,8 @@ ChillYWait can share your **personal best** scores to a world leaderboard (one r
 4. Rebuild the extension: `npm run build`
 
 The extension calls the hosted API at `https://chillywait.onrender.com`. `npm run leaderboard` still runs a local copy at `http://127.0.0.1:8787`. The Atlas password stays on the server.
+
+Free Render hosts sleep when idle. The first leaderboard request after sleep can take ~30s; the popup and leaderboard panel wake the API and show a short status message.
 
 ### Usernames
 
@@ -64,6 +74,15 @@ For development with HMR, run `npm run dev` and load the `dist` folder — crxjs
 npm run build
 ```
 
+### Chrome Web Store package
+
+```bash
+npm run build
+npm run pack
+```
+
+Upload `store/chillywait-<version>.zip`. Listing copy and privacy policy live in [`store/LISTING.md`](store/LISTING.md) and [`store/PRIVACY.md`](store/PRIVACY.md).
+
 ### Test
 
 ```bash
@@ -80,7 +99,8 @@ npm test
 
 ### Settings (extension popup)
 
-- **Player profile**: display name and opt-in for global leaderboard
+- **Player profile**: username and opt-in for global leaderboard
+- **Mute game sounds**: silence procedural SFX
 - **Activation mode**: threshold (recommended) or immediate
 - **Delay**: 3–30 seconds before overlay appears
 - **Gemini toggle**: enable/disable auto-activation on Gemini

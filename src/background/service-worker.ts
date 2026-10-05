@@ -5,8 +5,10 @@ import { getSettingsSafe } from '../shared/extension-context';
 import {
   fetchGlobalLeaderboard,
   submitGlobalScore,
+  wakeLeaderboard,
 } from '../shared/leaderboard-api';
 import { isLeaderboardConfigured } from '../shared/leaderboard-config';
+import type { LeaderboardPeriod } from '../shared/leaderboard';
 import { hasRegisteredUsername } from '../shared/profile';
 import { checkUsernameAvailable, claimUsername as claimUsernameApi } from '../shared/username-api';
 
@@ -50,6 +52,28 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message?.type === 'leaderboard_status') {
     sendResponse({ configured: isLeaderboardConfigured() });
+    return true;
+  }
+
+  if (message?.type === 'leaderboard_wake') {
+    void (async () => {
+      const configured = isLeaderboardConfigured();
+      if (!configured) {
+        sendResponse({ ok: false, configured: false });
+        return;
+      }
+      try {
+        const ok = await wakeLeaderboard();
+        sendResponse({ ok, configured: true, waking: !ok });
+      } catch (err) {
+        sendResponse({
+          ok: false,
+          configured: true,
+          waking: true,
+          error: err instanceof Error ? err.message : 'wake failed',
+        });
+      }
+    })();
     return true;
   }
 
@@ -107,13 +131,22 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return;
       }
       try {
-        const entries = await fetchGlobalLeaderboard(message.game as GameId);
-        sendResponse({ ok: true, entries, configured: true });
+        const period = (message.period as LeaderboardPeriod) || 'all';
+        const result = await fetchGlobalLeaderboard(message.game as GameId, period);
+        sendResponse({
+          ok: true,
+          entries: result.entries,
+          configured: true,
+          period: result.period,
+          day: result.day,
+          waking: result.waking,
+        });
       } catch (err) {
         sendResponse({
           ok: true,
           entries: [],
           configured: true,
+          waking: true,
           error: err instanceof Error ? err.message : 'fetch failed',
         });
       }
@@ -141,16 +174,25 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       }
 
       try {
-        const submitted = await submitGlobalScore(
+        const result = await submitGlobalScore(
           message.game as GameId,
           Number(message.score),
           settings.playerId,
+          Number(message.durationMs ?? 0),
+          message.seed != null ? Number(message.seed) : undefined,
         );
-        sendResponse({ ok: submitted, submitted, configured: true });
+        sendResponse({
+          ok: result.submitted,
+          submitted: result.submitted,
+          configured: true,
+          waking: result.waking,
+          error: result.error,
+        });
       } catch (err) {
         sendResponse({
           ok: false,
           configured: true,
+          waking: true,
           error: err instanceof Error ? err.message : 'submit failed',
         });
       }

@@ -1,6 +1,7 @@
 import type { GameController, RunEndCallback, ScoreCallback } from './types';
 import type { PauseReason, RunEndReason } from '../engine/types';
 import { GameRuntime, InputManager, Juice, audio } from '../engine';
+import { createSeededRng, freshRunSeed, type Rng } from '../../shared/seeded-rng';
 import {
   COLORS,
   drawGameOver,
@@ -81,6 +82,8 @@ export function createTrafficRider(
   let kickX = 0;
   let kickY = 0;
   let lastAnnouncedStage = 1;
+  let runSeed = freshRunSeed();
+  let rng: Rng = createSeededRng(runSeed);
   const juice = new Juice();
 
   const carColors = [COLORS.danger, COLORS.warn, '#c41e3a', '#7b2cbf', '#2563eb'];
@@ -98,6 +101,7 @@ export function createTrafficRider(
       score,
       durationMs: runStartedAt ? performance.now() - runStartedAt : 0,
       reason,
+      seed: runSeed,
     });
   };
 
@@ -122,6 +126,8 @@ export function createTrafficRider(
     kickX = 0;
     kickY = 0;
     lastAnnouncedStage = 1;
+    runSeed = freshRunSeed();
+    rng = createSeededRng(runSeed);
     juice.reset();
     onScore(0);
   };
@@ -134,12 +140,12 @@ export function createTrafficRider(
     if (free.length === 0) return;
     if (3 - free.length >= waveMaxParallel) return;
 
-    const l = free[Math.floor(Math.random() * free.length)];
+    const l = free[Math.floor(rng() * free.length)];
     cars.push({
       lane: l,
       z: 0,
-      color: carColors[Math.floor(Math.random() * carColors.length)],
-      kind: Math.random() < truckChance ? 'truck' : 'sedan',
+      color: carColors[Math.floor(rng() * carColors.length)],
+      kind: rng() < truckChance ? 'truck' : 'sedan',
       nearMissed: false,
     });
   };
@@ -526,7 +532,7 @@ export function createTrafficRider(
         const chance = nitro
           ? Math.min(1, live.spawnChance + 0.12)
           : live.spawnChance;
-        if (Math.random() < chance) {
+        if (rng() < chance) {
           spawnCar(live.maxParallel, live.truckChance);
         }
       }

@@ -9,6 +9,8 @@ export interface RunResult {
   score: number;
   durationMs: number;
   reason: RunEndReason;
+  /** Per-run PRNG seed for audit / future replay. */
+  seed?: number;
 }
 
 export interface GameRuntimeHooks {

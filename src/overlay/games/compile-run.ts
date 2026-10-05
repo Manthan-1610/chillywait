@@ -1,6 +1,7 @@
 import type { GameController, RunEndCallback, ScoreCallback } from './types';
 import type { PauseReason, RunEndReason } from '../engine/types';
 import { GameRuntime, InputManager, Juice, audio } from '../engine';
+import { createSeededRng, freshRunSeed, type Rng } from '../../shared/seeded-rng';
 import {
   COLORS,
   drawGameOver,
@@ -103,6 +104,8 @@ export function createCompileRun(
   let crashHold = 0;
   let landHang = 0;
   let lastAnnouncedStage = 1;
+  let runSeed = freshRunSeed();
+  let rng: Rng = createSeededRng(runSeed);
 
   const liveSpeed = () =>
     escalate(SPEED_BASE, SPEED_SOFT, runPressure(tick), {
@@ -121,14 +124,14 @@ export function createCompileRun(
       hardMin: 48,
     });
     const speedTrim = Math.min(14, (speed - SPEED_BASE) * 2.2);
-    const jitter = Math.floor(Math.random() * 16);
+    const jitter = Math.floor(rng() * 16);
     return Math.max(48, Math.round(base - speedTrim + jitter));
   };
 
   /** Bias toward taller/wider hazards as the run ages (gentle). */
   const pickKind = (): ObstacleKind => {
     const p = runPressure(tick);
-    const roll = Math.random();
+    const roll = rng();
     const shortW = Math.max(0.18, 0.42 - p * 0.03);
     const tallW = Math.min(0.45, 0.35 + p * 0.022);
     if (roll < shortW) return 'short';
@@ -159,6 +162,7 @@ export function createCompileRun(
       score,
       durationMs: runStartedAt ? performance.now() - runStartedAt : 0,
       reason,
+      seed: runSeed,
     });
   };
 
@@ -187,6 +191,8 @@ export function createCompileRun(
     crashHold = 0;
     landHang = 0;
     lastAnnouncedStage = 1;
+    runSeed = freshRunSeed();
+    rng = createSeededRng(runSeed);
     onScore(0);
   };
 
@@ -232,11 +238,11 @@ export function createCompileRun(
       hardMin: 30,
     });
     obstacles.push({
-      worldX: scroll + GAME_WIDTH + lead + Math.random() * 28,
+      worldX: scroll + GAME_WIDTH + lead + rng() * 28,
       w: dims.w,
       h: dims.h,
       kind,
-      label: labels[Math.floor(Math.random() * labels.length)],
+      label: labels[Math.floor(rng() * labels.length)],
       telegraph: 1,
       flash: 0,
     });

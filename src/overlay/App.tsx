@@ -16,6 +16,7 @@ import type { OverlayMessage } from '../shared/constants';
 import type { PauseReason, RunResult } from './engine/types';
 import { audio } from './engine';
 import { submitScore } from '../shared/leaderboard-client';
+import { getSettings, onSettingsChanged, saveSettings } from '../shared/storage';
 
 type HostPauseMessage = { type: 'pause'; paused: boolean; reason?: PauseReason };
 
@@ -25,6 +26,7 @@ export function App() {
   const [game, setGame] = useState<GameId>(DEFAULT_SETTINGS.lastGame);
   const [score, setScore] = useState(0);
   const [best, setBestScore] = useState(0);
+  const [muted, setMuted] = useState(DEFAULT_SETTINGS.soundMuted);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [answerPrompt, setAnswerPrompt] = useState(false);
   const [bestToast, setBestToast] = useState(false);
@@ -39,6 +41,25 @@ export function App() {
   const userMinimizedRef = useRef(false);
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const answerArmRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    void getSettings().then((s) => {
+      setMuted(s.soundMuted);
+      audio.muted = s.soundMuted;
+      if (s.lastGame) setGame(s.lastGame);
+    });
+    return onSettingsChanged((s) => {
+      setMuted(s.soundMuted);
+      audio.muted = s.soundMuted;
+    });
+  }, []);
+
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    audio.muted = next;
+    void saveSettings({ soundMuted: next });
+  };
 
   const armAnswer = () => {
     if (finishChosenRef.current) return;
@@ -82,7 +103,7 @@ export function App() {
       audio.play('best');
       setBestToast(true);
       window.setTimeout(() => setBestToast(false), 2400);
-      void submitScore(result.game, recorded.best);
+      void submitScore(result.game, recorded.best, result.durationMs, result.seed);
     }
     setAnswerPrompt(false);
   };
@@ -255,6 +276,12 @@ export function App() {
           🌍
         </button>
         <Controls
+          muted={muted}
+          onToggleMute={() => {
+            audio.unlock();
+            toggleMute();
+            audio.play('ui');
+          }}
           onMinimize={() => {
             userMinimizedRef.current = true;
             postToParent({ type: 'minimize' });

@@ -347,6 +347,38 @@ body {
   color: #ffec27;
 }
 
+.leaderboard-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px 0;
+}
+
+.leaderboard-tab {
+  flex: 1;
+  padding: 4px 6px;
+  border: 1px solid #3b2d6e;
+  background: #1a1030;
+  color: #9aa0a6;
+  border-radius: 3px;
+  font-size: 9px;
+  font-family: inherit;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.leaderboard-tab.is-active {
+  border-color: #ffec27;
+  color: #ffec27;
+  background: #2a1a05;
+}
+
+.leaderboard-day {
+  margin: 4px 10px 0;
+  font-size: 8px;
+  color: #6b7280;
+  text-align: center;
+}
+
 .leaderboard-msg {
   padding: 16px 12px;
   font-size: 10px;

@@ -74,6 +74,7 @@ export function ensureProfileSettings(
     username: isValidUsername(username) ? sanitizeUsername(username) : '',
     usernameSetAt,
     leaderboardOptIn: base.leaderboardOptIn ?? false,
+    soundMuted: base.soundMuted ?? false,
   };
 }
 

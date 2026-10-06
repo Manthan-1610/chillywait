@@ -1,5 +1,20 @@
 type KeyHandler = (e: KeyboardEvent) => void;
 
+/** Keys that refer to the same physical press. */
+function pressAliases(id: string): string[] {
+  if (id === 'Space' || id === ' ') return ['Space', ' '];
+  if (id === 'Enter' || id === 'NumpadEnter') return ['Enter', 'NumpadEnter'];
+  if (id === 'Shift' || id === 'ShiftLeft' || id === 'ShiftRight') {
+    return ['Shift', 'ShiftLeft', 'ShiftRight'];
+  }
+  const lower = id.length === 1 ? id.toLowerCase() : '';
+  if (lower && lower >= 'a' && lower <= 'z') {
+    const upper = lower.toUpperCase();
+    return [lower, upper, `Key${upper}`];
+  }
+  return [id];
+}
+
 /**
  * Overlay-level input: listens on window so GamePicker / chrome clicks
  * don't permanently steal keyboard focus from the playfield.
@@ -51,13 +66,15 @@ export class InputManager {
   }
 
   isDown(codeOrKey: string): boolean {
-    return this.keysDown.has(codeOrKey);
+    return pressAliases(codeOrKey).some((id) => this.keysDown.has(id));
   }
 
-  /** True once per press until consumed. */
+  /** True once per physical press until consumed (aliases cleared together). */
   consumePress(codeOrKey: string): boolean {
-    if (!this.keysPressed.has(codeOrKey)) return false;
-    this.keysPressed.delete(codeOrKey);
+    const aliases = pressAliases(codeOrKey);
+    const hit = aliases.some((id) => this.keysPressed.has(id));
+    if (!hit) return false;
+    for (const id of aliases) this.keysPressed.delete(id);
     return true;
   }
 
@@ -65,11 +82,19 @@ export class InputManager {
     if (!this.enabled) return;
     if (this.isTypingTarget(e.target)) return;
 
-    const ids = [e.code, e.key];
-    for (const id of ids) {
-      if (!this.keysDown.has(id)) this.keysPressed.add(id);
-      this.keysDown.add(id);
+    // One edge event per physical key. Prefer code; keep key for legacy checks.
+    const primary = e.code || e.key;
+    const alreadyDown =
+      pressAliases(primary).some((id) => this.keysDown.has(id)) ||
+      this.keysDown.has(e.key);
+
+    if (!alreadyDown) {
+      this.keysPressed.add(primary);
     }
+
+    this.keysDown.add(e.code);
+    this.keysDown.add(e.key);
+    for (const id of pressAliases(primary)) this.keysDown.add(id);
 
     if (
       e.code === 'Space' ||
@@ -86,6 +111,11 @@ export class InputManager {
   }
 
   private handleKeyUp(e: KeyboardEvent): void {
+    const primary = e.code || e.key;
+    for (const id of pressAliases(primary)) {
+      this.keysDown.delete(id);
+      this.keysPressed.delete(id);
+    }
     this.keysDown.delete(e.code);
     this.keysDown.delete(e.key);
   }

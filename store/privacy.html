@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChillYWait Privacy Policy</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+        line-height: 1.55;
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 20px 64px;
+        color: #111;
+        background: #fff;
+      }
+      h1, h2 { line-height: 1.25; }
+      h1 { font-size: 1.75rem; }
+      h2 { margin-top: 1.75rem; font-size: 1.15rem; }
+      ul { padding-left: 1.25rem; }
+      a { color: #1a73e8; }
+      .meta { color: #555; }
+    </style>
+  </head>
+  <body>
+    <h1>ChillYWait Privacy Policy</h1>
+    <p class="meta"><strong>Last updated:</strong> 2026-10-04</p>
+
+    <p>
+      ChillYWait is a Chrome extension that shows arcade minigames while Gemini
+      is generating a response.
+    </p>
+
+    <h2>Data we store on your device</h2>
+    <ul>
+      <li>Extension settings (activation mode, delay, enabled sites, mute preference)</li>
+      <li>An anonymous player ID created locally in the browser</li>
+      <li>Local high scores for each minigame</li>
+      <li>Optional claimed username and leaderboard opt-in preference</li>
+    </ul>
+    <p>This data stays in Chrome sync/local storage on your devices.</p>
+
+    <h2>Optional world leaderboard</h2>
+    <p>
+      If you claim a username and enable
+      <strong>Share my best scores on the world leaderboard</strong>, ChillYWait may send:
+    </p>
+    <ul>
+      <li>Your claimed username</li>
+      <li>Your anonymous player ID</li>
+      <li>Game id, score, run duration, and a run seed used for fairness checks</li>
+    </ul>
+    <p>
+      Scores are stored on our MongoDB Atlas database via the ChillYWait API
+      (<code>chillywait.onrender.com</code>).
+    </p>
+    <p>
+      You can stop sharing by turning off the leaderboard opt-in in the extension
+      popup. Existing public scores may remain until removed by maintainers.
+    </p>
+
+    <h2>What we do not collect</h2>
+    <ul>
+      <li>Gemini prompt or response text</li>
+      <li>Chat history</li>
+      <li>Browsing history outside Gemini activation</li>
+      <li>Payment information</li>
+      <li>Precise location</li>
+    </ul>
+    <p>
+      ChillYWait does not intercept Gemini network traffic. It uses on-page UI
+      signals to detect when Gemini is generating.
+    </p>
+
+    <h2>Third parties</h2>
+    <ul>
+      <li><strong>MongoDB Atlas</strong> — stores optional leaderboard profiles and scores</li>
+      <li><strong>Render</strong> — hosts the leaderboard API</li>
+    </ul>
+
+    <h2>Children</h2>
+    <p>ChillYWait is not directed at children under 13.</p>
+
+    <h2>Contact</h2>
+    <p>
+      For privacy questions or score deletion requests, open an issue on the
+      project repository:
+      <a href="https://github.com/Manthan-1610/chillywait"
+        >https://github.com/Manthan-1610/chillywait</a
+      >
+    </p>
+
+    <h2>Changes</h2>
+    <p>
+      We may update this policy. The “Last updated” date above will change when
+      we do.
+    </p>
+  </body>
+</html>

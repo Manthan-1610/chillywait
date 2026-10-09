@@ -29,7 +29,11 @@ Permissions
 • Host access to chillywait.onrender.com — optional leaderboard API only
 
 Privacy policy
-https://github.com/Manthan-1610/chillywait/blob/main/store/PRIVACY.md
+https://cdn.jsdelivr.net/gh/Manthan-1610/chillywait@main/store/privacy.html
+
+Homepage (optional)
+https://cdn.jsdelivr.net/gh/Manthan-1610/chillywait@main/store/privacy.html
+
 
 ## Category
 

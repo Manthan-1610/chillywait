@@ -1,4 +1,7 @@
 import { createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { MongoClient } from 'mongodb';
 import { isScorePlausible, utcDayKey } from './score-limits.mjs';
 
@@ -9,6 +12,20 @@ const GAMES = new Set(['traffic', 'coffee', 'compile-run']);
 const PERIODS = new Set(['all', 'daily']);
 const COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 const SUBMIT_GAP_MS = 4_000;
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PRIVACY_HTML = readFileSync(join(__dirname, '..', 'store', 'privacy.html'), 'utf8');
+const HOME_HTML = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ChillYWait</title>
+<style>body{font-family:system-ui,sans-serif;max-width:640px;margin:48px auto;padding:0 20px;line-height:1.5;color:#111}
+a{color:#1a73e8}</style></head>
+<body>
+<h1>ChillYWait</h1>
+<p>Play arcade minigames while Gemini thinks.</p>
+<p><a href="/privacy">Privacy Policy</a></p>
+<p><a href="https://github.com/Manthan-1610/chillywait">GitHub</a></p>
+</body></html>`;
+
 
 const uri = process.env.MONGODB_URI?.trim();
 if (!uri || uri.includes('<db_password>') || uri.includes('YOUR_PASSWORD')) {
@@ -22,6 +39,15 @@ const profiles = db.collection('player_profiles');
 const scores = db.collection('leaderboard_scores');
 const dailyScores = db.collection('leaderboard_daily');
 const recentSubmits = new Map();
+
+function html(res, status, body) {
+  res.writeHead(status, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Content-Length': Buffer.byteLength(body),
+    'Cache-Control': 'public, max-age=300',
+  });
+  res.end(body);
+}
 
 function json(res, status, body) {
   const payload = JSON.stringify(body);
@@ -198,6 +224,14 @@ const server = createServer(async (req, res) => {
 
   const url = new URL(req.url ?? '/', `http://${HOST}`);
   try {
+    if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/home')) {
+      html(res, 200, HOME_HTML);
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/privacy') {
+      html(res, 200, PRIVACY_HTML);
+      return;
+    }
     if (req.method === 'GET' && url.pathname === '/health') {
       json(res, 200, { ok: true });
       return;
